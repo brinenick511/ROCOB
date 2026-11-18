@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# Local inputs and generated ROCOB artifacts
+/gptq-ids.json
+/pac-ids.json
+/q4/
+/prof/
+/plan/
+/rocob-fixed/
+/rocob-gsem/
+/artifacts/
+/checkpoints/

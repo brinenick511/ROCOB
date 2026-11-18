@@ -1,0 +1,8 @@
+{
+  "rank_allocation": "gsem",
+  "base_pac_rank": 1,
+  "OGC_RANK": 1,
+  "max_pac_rank_increment": 2,
+  "total_parameter_budget": 64,
+  "damp_percent": 0.0
+}
