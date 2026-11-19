@@ -17,7 +17,7 @@ def main() -> None:
     arguments = parser.parse_args()
     config = json.loads(arguments.config.read_text(encoding="utf-8"))
     rank_allocation = config["rank_allocation"]
-    ogc_rank = config["OGC_RANK"]
+    ogc_rank = config["ogc_rank"] if "ogc_rank" in config else config["OGC_RANK"]
     damp_percent = config["damp_percent"]
     modules = []
     for module_name, residual_diagonal, in_features, observed_features in (
@@ -36,7 +36,8 @@ def main() -> None:
 
     if rank_allocation == "fixed":
         total_parameter_budget = None
-        pac_ranks = [config["PAC_RANK"]] * len(modules)
+        pac_rank = config["pac_rank"] if "pac_rank" in config else config["PAC_RANK"]
+        pac_ranks = [pac_rank] * len(modules)
     elif rank_allocation == "gsem":
         base_pac_rank = config["base_pac_rank"]
         total_parameter_budget = config["total_parameter_budget"]

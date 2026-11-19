@@ -1,16 +1,18 @@
-# ROCOB for GPTQ
+# ROCOB
 
-ROCOB builds a training-free low-rank adapter for a saved GPTQ checkpoint. PAC fits the weight residual in the calibration geometry. OGC fits the residual left by PAC. GSEM assigns extra PAC rank under a shared parameter budget. [Paper](https://aclanthology.org/2026.aacl-long.158/)
+[![ACL Anthology](https://img.shields.io/badge/ACL_Anthology-2026.aacl--long.158-1f6feb?style=flat)](https://aclanthology.org/2026.aacl-long.158/)
+
+Code for *ROCOB: Dual-Manifold Alignment with Optimal Budgeting for Training-Free PTQ Recovery* (IJCNLP–AACL 2026). ROCOB builds a low-rank adapter for a saved GPTQ checkpoint without training. PAC and OGC fit successive weight residuals, and GSEM allocates extra PAC ranks across projections under a shared parameter budget. [Paper PDF](docs/paper.pdf) · [Poster PDF](docs/poster.pdf) · [SpinQuant experiment](experiments/spinquant/README.md)
 
 ## Qwen3-1.7B W4A16
 
-Use one visible NVIDIA CUDA GPU and install the upstream GPTQModel build dependencies, including a CUDA build of PyTorch. Install the pinned source in that environment. The CLI checks the commit recorded by pip.
+Use one NVIDIA CUDA GPU and install GPTQModel's build dependencies, including a CUDA build of PyTorch. Install the pinned source below.
 
 ```sh
 pip install --no-build-isolation 'GPTQModel @ git+https://github.com/ModelCloud/GPTQModel.git@6c3e279867a473e39be0329555215fd6bcffae55'
 ```
 
-Set `MODEL` to your local `Qwen/Qwen3-1.7B` safetensors snapshot directory, named for its full 40-character commit SHA. Use the same snapshot for both commands. Each calibration JSON file contains one array of unpadded token ID arrays from that snapshot's tokenizer in input order. Use sequences longer than 10 tokens. The two files may contain different calibration sets.
+Set `MODEL` to a local `Qwen/Qwen3-1.7B` safetensors snapshot directory named for its full 40-character commit SHA. Each calibration file is a JSON array of unpadded token ID sequences, each longer than 10 tokens and encoded with the snapshot's tokenizer. Quantization and profiling may use different calibration sets.
 
 ```sh
 export CUDA_VISIBLE_DEVICES=0
@@ -26,9 +28,7 @@ For fixed PAC and OGC ranks, use the same profile.
 python gptq.py adapter q4 prof rocob-fixed --pac 14 --ogc 2
 ```
 
-The example uses symmetric 4-bit GPTQ with group size 128 and requests GPU packing, following the original GPTQ entrypoint. The paper appendix gives quantizer damping `0.05` and retry increment `0.01`. Profiling applies PAC damping `0.05` once, configurable with `--pac-damp`.
-
-The input snapshot SHA and token files are supplied locally. FP16, sequential quantization, batch size 1 and the PAC/OGC split here define the demo. For an example calibration mix, prepare WikiText-2 for quantization and C4 plus GSM8K training data for profiling. `--budget-rank 16` caps total adapter parameters at `16 * sum(in_features + out_features)` over the actual projections. Use `--total-params N` for an explicit parameter cap. The example is pending hardware validation.
+This example uses symmetric 4-bit GPTQ with group size 128. Profiling uses PAC damping `0.05` by default (`--pac-damp`). GSEM adds a per-projection increment of up to `--max-increment` to `--base-pac`. Here `--budget-rank 16` caps the total adapter parameters at `16 * sum(in_features + out_features)` across projections. Use `--total-params N` for a direct parameter cap. Hardware validation is pending.
 
 ## Artifacts and loading
 
@@ -42,16 +42,31 @@ from gptq import load_adapter
 model = load_adapter("q4", "rocob-gsem")
 ```
 
-Profiling replays the saved GPTQ weights in dense FP16 and records calibration statistics before adding any correction. Both rank modes fit the exact cached residual and moment. The loader checks the packed base and transposed adapter shapes and disables the pinned Torch backend's dequantized weight cache for adapted projections.
+Both rank modes fit the cached residuals and moments from the dense FP16 replay. The adapter loader checks the packed base and adapter shapes. This workflow supports dense Qwen3, homogeneous GPTQ W4A16, unpadded projections and a positive total LoRA rank on every projection.
 
-The GPTQ adapter workflow supports dense Qwen3, homogeneous GPTQ W4A16, one GPU, unpadded projections and positive total LoRA rank on every projection.
-
-## SpinQuant supplement (v0.4)
+## SpinQuant evaluation
 
 Evaluate Llama-3.2-1B-Instruct on WikiText-2 at W2 or W3 using a learned rotation, GPTQ and fixed PAC/OGC ranks. The SpinQuant patch and launcher are distributed under CC BY-NC 4.0. [Experiment](experiments/spinquant/README.md) · [SpinQuant license](experiments/spinquant/LICENSE)
 
-## Paper and licenses
+## Licenses
 
-Haoqi Yang, Teng Xiao, Zuchao Li, Hao Huang, Lefei Zhang, and Hai Zhao. 2026. *ROCOB: Dual-Manifold Alignment with Optimal Budgeting for Training-Free PTQ Recovery*. IJCNLP-AACL 2026. [Paper](https://aclanthology.org/2026.aacl-long.158/)
+The compensation code retains the NVIDIA and ModelCloud EoRA notices. [ROCOB MIT license](LICENSE) · [GPTQModel Apache 2.0 terms](LICENSE-GPTQModel) · [GPTQModel source at `6c3e2798`](https://github.com/ModelCloud/GPTQModel/tree/6c3e279867a473e39be0329555215fd6bcffae55)
 
-The GPTQ integration targets GPTQModel at `6c3e2798`. It uses the repository's MIT terms alongside the applicable third-party terms. The compensation core carries the NVIDIA and ModelCloud EoRA notices. [GPTQModel pin](https://github.com/ModelCloud/GPTQModel/tree/6c3e279867a473e39be0329555215fd6bcffae55) · [MIT license](LICENSE) · [GPTQModel Apache 2.0 terms](LICENSE-GPTQModel)
+The published paper is available under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). [Publication record](https://aclanthology.org/2026.aacl-long.158/)
+
+## Citation
+
+```bibtex
+@inproceedings{yang-etal-2026-rocob,
+  title     = {{ROCOB}: Dual-Manifold Alignment with Optimal Budgeting for Training-Free {PTQ} Recovery},
+  author    = {Yang, Haoqi and Xiao, Teng and Li, Zuchao and
+               Huang, Hao and Zhang, Lefei and Zhao, Hai},
+  booktitle = {Proceedings of the 15th International Joint Conference on Natural Language Processing
+               and the 5th Conference of the Asia-Pacific Chapter of the Association for
+               Computational Linguistics (Volume 1: Long Papers)},
+  year      = {2026},
+  pages     = {3491--3512},
+  doi       = {10.18653/2026.aacl-long.158},
+  url       = {https://aclanthology.org/2026.aacl-long.158/}
+}
+```
