@@ -44,10 +44,14 @@ model = load_adapter("q4", "rocob-gsem")
 
 Profiling replays the saved GPTQ weights in dense FP16 and records calibration statistics before adding any correction. Both rank modes fit the exact cached residual and moment. The loader checks the packed base and transposed adapter shapes and disables the pinned Torch backend's dequantized weight cache for adapted projections.
 
-The release scope is dense Qwen3, homogeneous GPTQ W4A16, one GPU, unpadded projections and positive total LoRA rank on every projection.
+The GPTQ adapter workflow supports dense Qwen3, homogeneous GPTQ W4A16, one GPU, unpadded projections and positive total LoRA rank on every projection.
+
+## SpinQuant supplement (v0.4)
+
+Evaluate Llama-3.2-1B-Instruct on WikiText-2 at W2 or W3 using a learned rotation, GPTQ and fixed PAC/OGC ranks. The SpinQuant patch and launcher are distributed under CC BY-NC 4.0. [Experiment](experiments/spinquant/README.md) · [SpinQuant license](experiments/spinquant/LICENSE)
 
 ## Paper and licenses
 
 Haoqi Yang, Teng Xiao, Zuchao Li, Hao Huang, Lefei Zhang, and Hai Zhao. 2026. *ROCOB: Dual-Manifold Alignment with Optimal Budgeting for Training-Free PTQ Recovery*. IJCNLP-AACL 2026. [Paper](https://aclanthology.org/2026.aacl-long.158/)
 
-The integration targets [GPTQModel at `6c3e2798`](https://github.com/ModelCloud/GPTQModel/tree/6c3e279867a473e39be0329555215fd6bcffae55). The compensation core carries the NVIDIA and ModelCloud EoRA notices. [MIT license](LICENSE) · [GPTQModel Apache 2.0 terms](LICENSE-GPTQModel)
+The GPTQ integration targets GPTQModel at `6c3e2798`. It uses the repository's MIT terms alongside the applicable third-party terms. The compensation core carries the NVIDIA and ModelCloud EoRA notices. [GPTQModel pin](https://github.com/ModelCloud/GPTQModel/tree/6c3e279867a473e39be0329555215fd6bcffae55) · [MIT license](LICENSE) · [GPTQModel Apache 2.0 terms](LICENSE-GPTQModel)
